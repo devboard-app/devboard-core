@@ -11,6 +11,6 @@ COPY users/ users/
 
 EXPOSE 8000
 
-RUN python manage.py collectstatic --noinput
+RUN SECRET_KEY=dummy INTERNAL_API_KEY=dummy python manage.py collectstatic --noinput
 
 CMD ["sh", "-c", "python manage.py migrate && uvicorn core.asgi:application --host 0.0.0.0 --port 8000"]
