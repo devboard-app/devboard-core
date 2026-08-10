@@ -1,0 +1,14 @@
+asgiref==3.12.1
+click==8.4.2
+colorama==0.4.6
+Django==6.1
+django-environ==0.14.0
+djangorestframework==3.18.0
+whitenoise==6.9.0
+h11==0.16.0
+psycopg==3.3.4
+psycopg-binary==3.3.4
+python-dotenv==1.2.2
+sqlparse==0.5.5
+tzdata==2026.3
+uvicorn==0.52.1

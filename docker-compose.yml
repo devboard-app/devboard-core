@@ -1,0 +1,18 @@
+services:
+  devboard-core:
+    build:
+      context: .
+    container_name: devboard-core
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST: devboard-db
+      DB_PORT: 5432
+    ports:
+      - "8003:8000"
+    networks:
+      - devboard-network
+
+networks:
+  devboard-network:
+    external: true
