@@ -4,7 +4,7 @@ from jose import JWTError, jwt
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
-from .repository import get_user_by_id
+from .repository import get_user_by_id, update_last_active
 
 
 class JWTAuthentication(BaseAuthentication):
@@ -27,6 +27,6 @@ class JWTAuthentication(BaseAuthentication):
         user = async_to_sync(get_user_by_id)(user_id)
         if user is None:
             raise AuthenticationFailed('User not found')
-
+        async_to_sync(update_last_active)(user)
         return (user, token)
         
