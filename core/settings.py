@@ -29,6 +29,7 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', default=False)
 ALLOWED_HOSTS = list(env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', 'devboard-core']))  #type:ignore
 INTERNAL_API_KEY = env('INTERNAL_API_KEY')
+JWT_SECRET = env('JWT_SECRET')
 
 
 # Application definition
@@ -135,4 +136,10 @@ MAILERS = {
     'default': {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'users.authentication.JWTAuthentication',
+    ]
 }

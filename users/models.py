@@ -14,7 +14,7 @@ class UserProfile(models.Model):
         ACTIVE = 'active', 'Active'
         INACTIVE = 'inactive', 'Inactive'
 
-    user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable= False)
+    user_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=150, blank=True, default='')
     avatar = models.URLField(blank=True, default='')
@@ -35,3 +35,8 @@ class UserProfile(models.Model):
         if not self.name:
             self.name = self.email.split('@')[0]
         super().save(*args, **kwargs)
+
+    @property
+    def is_authenticated(self):
+        return True
+    
