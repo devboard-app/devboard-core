@@ -14,7 +14,6 @@ from .serializers import UserSyncSerializer
 class SyncUserView(AsyncAPIView):
     permission_classes : ClassVar =  [IsInternalService]
     async def post(self, request):
-         
         instance = await get_user_by_id(request.data.get('user_id'))
         serializer = UserSyncSerializer(instance, data=request.data)
         if await sync_to_async(serializer.is_valid)():
