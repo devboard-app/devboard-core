@@ -7,15 +7,15 @@ from rest_framework.response import Response
 
 from core.views import AsyncAPIView
 
-from .permissions import IsInternalService
+from .infrastructure import sync_user_status_to_auth
+from .permissions import IsAdmin, IsInternalService
 from .repository import get_user_by_id
-from .serializers import UserProfileSerializer, UserSyncSerializer
+from .serializers import UserProfileSerializer, UserStatusSerializer, UserSyncSerializer
 
 
 class SyncUserView(AsyncAPIView):
     permission_classes : ClassVar =  [IsInternalService]
     async def post(self, request):
-        print(request.data)
         instance = await get_user_by_id(request.data.get('user_id'))
         serializer = UserSyncSerializer(instance, data=request.data)
         if await sync_to_async(serializer.is_valid)():
@@ -33,5 +33,20 @@ class MeView(AsyncAPIView):
         serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
         if await sync_to_async(serializer.is_valid)():
             await sync_to_async(serializer.save)()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserStatusView(AsyncAPIView):
+    permission_classes: ClassVar = [IsAuthenticated, IsAdmin]
+
+    async def patch(self, request, user_id):
+        instance = await get_user_by_id(user_id)
+        if instance is None:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = UserStatusSerializer(instance, data=request.data, partial=True)
+        if await sync_to_async(serializer.is_valid)():
+            await sync_to_async(serializer.save)()
+            await sync_to_async(instance.refresh_from_db)()
+            await sync_user_status_to_auth(str(user_id), instance.status)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -16,3 +16,8 @@ class UserSyncSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields: ClassVar = ['user_id', 'email', 'role']
+
+class UserStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields: ClassVar = ['status']
