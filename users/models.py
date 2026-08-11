@@ -12,7 +12,7 @@ class UserProfile(models.Model):
 
     class Status(models.TextChoices):
         ACTIVE = 'active', 'Active'
-        INACTIVE = 'inactive', 'inactive'
+        INACTIVE = 'inactive', 'Inactive'
 
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable= False)
     email = models.EmailField(unique=True)
