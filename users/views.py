@@ -1,5 +1,5 @@
 from typing import ClassVar
-import asyncio
+
 from asgiref.sync import sync_to_async
 from rest_framework import status
 from rest_framework.response import Response
@@ -14,7 +14,7 @@ from .serializers import UserSyncSerializer
 class SyncUserView(AsyncAPIView):
     permission_classes : ClassVar =  [IsInternalService]
     async def post(self, request):
-        await asyncio.sleep(2) 
+         
         instance = await get_user_by_id(request.data.get('user_id'))
         serializer = UserSyncSerializer(instance, data=request.data)
         if await sync_to_async(serializer.is_valid)():
