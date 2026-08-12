@@ -1,10 +1,11 @@
-from asgiref.sync import async_to_sync
+from datetime import datetime, timezone
+
 from django.conf import settings
 from jose import JWTError, jwt
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 
-from .repository import get_user_by_id, update_last_active
+from users.models import UserProfile
 
 
 class JWTAuthentication(BaseAuthentication):
@@ -24,9 +25,12 @@ class JWTAuthentication(BaseAuthentication):
         if not user_id:
             raise AuthenticationFailed('Invalid token payload')
 
-        user = async_to_sync(get_user_by_id)(user_id)
+        user = UserProfile.objects.filter(user_id=user_id).first()
         if user is None:
             raise AuthenticationFailed('User not found')
-        async_to_sync(update_last_active)(user)
+        if user.status != UserProfile.Status.ACTIVE:
+            raise AuthenticationFailed('User account is inactive')
+        user.last_active = datetime.now(timezone.utc)
+        user.save(update_fields=['last_active'])
         return (user, token)
         
