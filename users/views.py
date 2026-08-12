@@ -7,10 +7,15 @@ from rest_framework.response import Response
 
 from core.views import AsyncAPIView
 
-from .infrastructure import sync_user_status_to_auth
+from .infrastructure import sync_user_role_to_auth, sync_user_status_to_auth
 from .permissions import IsAdmin, IsInternalService
 from .repository import get_user_by_id
-from .serializers import UserProfileSerializer, UserStatusSerializer, UserSyncSerializer
+from .serializers import (
+    UserProfileSerializer,
+    UserRoleSerializer,
+    UserStatusSerializer,
+    UserSyncSerializer,
+)
 
 
 class SyncUserView(AsyncAPIView):
@@ -47,6 +52,20 @@ class UserStatusView(AsyncAPIView):
         serializer = UserStatusSerializer(instance, data=request.data, partial=True)
         if await sync_to_async(serializer.is_valid)():
             await sync_user_status_to_auth(str(user_id), request.data['status'])
+            await sync_to_async(serializer.save)()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserRoleView(AsyncAPIView):
+    permission_classes: ClassVar = [IsAuthenticated, IsAdmin]
+
+    async def patch(self, request, user_id):
+        instance = await get_user_by_id(user_id)
+        if instance is None:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = UserRoleSerializer(instance, data=request.data, partial=True)
+        if await sync_to_async(serializer.is_valid)():
+            await sync_user_role_to_auth(str(user_id), request.data['role'])
             await sync_to_async(serializer.save)()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
