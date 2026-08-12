@@ -46,8 +46,7 @@ class UserStatusView(AsyncAPIView):
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         serializer = UserStatusSerializer(instance, data=request.data, partial=True)
         if await sync_to_async(serializer.is_valid)():
+            await sync_user_status_to_auth(str(user_id), request.data['status'])
             await sync_to_async(serializer.save)()
-            await sync_to_async(instance.refresh_from_db)()
-            await sync_user_status_to_auth(str(user_id), instance.status)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
