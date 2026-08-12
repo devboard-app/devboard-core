@@ -28,6 +28,8 @@ class JWTAuthentication(BaseAuthentication):
         user = UserProfile.objects.filter(user_id=user_id).first()
         if user is None:
             raise AuthenticationFailed('User not found')
+        if user.status != UserProfile.Status.ACTIVE:
+            raise AuthenticationFailed('User account is inactive')
         user.last_active = datetime.now(timezone.utc)
         user.save(update_fields=['last_active'])
         return (user, token)
