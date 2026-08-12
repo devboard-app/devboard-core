@@ -17,6 +17,14 @@ class UserSyncSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields: ClassVar = ['user_id', 'email', 'role']
 
+    def validate_email(self, value):
+        user_id = self.initial_data.get('user_id') #type: ignore
+        existing = UserProfile.objects.filter(user_id=user_id).first()
+        if existing is not None and existing.email != value:
+            raise serializers.ValidationError('Email does not match existing record')
+        return value
+
+
 class UserStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
