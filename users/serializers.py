@@ -29,3 +29,8 @@ class UserStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields: ClassVar = ['status']
+
+class UserRoleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields: ClassVar =['role']
