@@ -9,10 +9,13 @@ class AuthServiceException(APIException):
 
 async def sync_user_status_to_auth(user_id: str, status: str) -> None:
     async with httpx.AsyncClient() as client:
-        response = await client.patch(
-            f"{settings.AUTH_SERVICE_URL}/internal/users/{user_id}/status/",
-            json={"is_active": status == "active"},
-            headers={"X-Service-Key": settings.INTERNAL_API_KEY},
-        )
-        if response.status_code != 204:
+        try:
+            response = await client.patch(
+                f"{settings.AUTH_SERVICE_URL}/internal/users/{user_id}/status/",
+                json={"is_active": status == "active"},
+                headers={"X-Service-Key": settings.INTERNAL_API_KEY},
+            )
+            if response.status_code != 204:
+                raise AuthServiceException()
+        except httpx.RequestError:
             raise AuthServiceException()
