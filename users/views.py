@@ -20,7 +20,8 @@ class SyncUserView(AsyncAPIView):
         serializer = UserSyncSerializer(instance, data=request.data)
         if await sync_to_async(serializer.is_valid)():
             await sync_to_async(serializer.save)()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            response_status = status.HTTP_201_CREATED if instance is None else status.HTTP_200_OK
+            return Response(serializer.data, response_status)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class MeView(AsyncAPIView):
