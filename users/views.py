@@ -34,7 +34,7 @@ class MeView(AsyncAPIView):
         serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
         if await sync_to_async(serializer.is_valid)():
             await sync_to_async(serializer.save)()
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserStatusView(AsyncAPIView):
@@ -48,5 +48,5 @@ class UserStatusView(AsyncAPIView):
         if await sync_to_async(serializer.is_valid)():
             await sync_user_status_to_auth(str(user_id), request.data['status'])
             await sync_to_async(serializer.save)()
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
