@@ -9,7 +9,7 @@ from core.views import AsyncAPIView
 
 from .infrastructure import sync_user_role_to_auth, sync_user_status_to_auth
 from .permissions import IsAdmin, IsInternalService
-from .repository import get_user_by_id, get_user_by_email
+from .repository import get_user_by_email, get_user_by_id
 from .serializers import (
     UserProfileSerializer,
     UserRoleSerializer,
