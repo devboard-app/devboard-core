@@ -9,7 +9,7 @@ from core.views import AsyncAPIView
 
 from .infrastructure import sync_user_role_to_auth, sync_user_status_to_auth
 from .permissions import IsAdmin, IsInternalService
-from .repository import get_user_by_id
+from .repository import get_all_users, get_user_by_id
 from .serializers import (
     UserProfileSerializer,
     UserRoleSerializer,
@@ -69,3 +69,22 @@ class UserRoleView(AsyncAPIView):
             await sync_to_async(serializer.save)()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserListView(AsyncAPIView):
+    permission_classes: ClassVar =[IsAuthenticated, IsAdmin]
+
+    async def get(self, request):
+        users = await get_all_users()
+        serializer = UserProfileSerializer(users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class UserDetailView(AsyncAPIView):
+    permission_classes: ClassVar =[IsAuthenticated]
+
+    async def get(self, request, user_id):
+        user = await get_user_by_id(user_id)
+        if user is None:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        serializer = UserProfileSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
