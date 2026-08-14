@@ -3,11 +3,11 @@ from django.urls import path
 from .views import (
     MeView,
     SyncUserView,
+    UserByEmailView,
     UserDetailView,
     UserListView,
     UserRoleView,
     UserStatusView,
-    UserByEmailView,
 )
 
 urlpatterns = [
