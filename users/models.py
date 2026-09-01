@@ -1,3 +1,4 @@
+import re
 import uuid
 
 from django.db import models
@@ -16,7 +17,7 @@ class UserProfile(models.Model):
 
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     email = models.EmailField(unique=True)
-    name = models.CharField(max_length=150, blank=True, default='')
+    username = models.CharField(max_length=30, unique=True)
     avatar = models.URLField(blank=True, default='')
     timezone = models.CharField(max_length=50, blank=True, default='Europe/Bucharest')
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.MEMBER)
@@ -32,8 +33,13 @@ class UserProfile(models.Model):
         return f'{self.email} ({self.role})'
 
     def save(self, *args, **kwargs):
-        if not self.name:
-            self.name = self.email.split('@')[0]
+        if not self.username:
+            base = re.sub(r'[^a-z0-9_.-]', '', self.email.split('@')[0].lower())[:26] or 'user'
+            candidate, suffix = base, 1
+            while UserProfile.objects.filter(username=candidate).exists():
+                suffix += 1
+                candidate = f'{base}{suffix}'
+            self.username = candidate
         super().save(*args, **kwargs)
 
     @property

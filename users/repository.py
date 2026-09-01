@@ -9,3 +9,6 @@ async def get_user_by_email(email: str)-> UserProfile | None:
 
 async def get_all_users()-> list[UserProfile] | None:
     return [user async for user in UserProfile.objects.all()]
+
+async def get_users_by_usernames(usernames: list[str]) -> list[UserProfile]:
+    return [user async for user in UserProfile.objects.filter(username__in=usernames, status=UserProfile.Status.ACTIVE)]
