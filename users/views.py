@@ -9,8 +9,14 @@ from core.views import AsyncAPIView
 
 from .infrastructure import sync_user_role_to_auth, sync_user_status_to_auth
 from .permissions import IsAdmin, IsInternalService
-from .repository import get_all_users, get_user_by_email, get_user_by_id
+from .repository import (
+    get_all_users,
+    get_user_by_email,
+    get_user_by_id,
+    get_users_by_usernames,
+)
 from .serializers import (
+    UserLookupSerializer,
     UserProfileSerializer,
     UserRoleSerializer,
     UserStatusSerializer,
@@ -100,3 +106,20 @@ class UserDetailView(AsyncAPIView):
         serializer = UserProfileSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
         
+class UserLookupView(AsyncAPIView):
+    permission_classes: ClassVar = [IsInternalService]
+
+    MAX_USERNAMES = 25
+
+    async def post(self, request):
+        raw = request.data.get('usernames')
+        if not isinstance(raw, list):
+            return Response({'detail': 'usernames must be a list.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        usernames = list({u.lower() for u in raw if isinstance(u, str) and u})[:self.MAX_USERNAMES]
+        if not usernames:
+            return Response([], status=status.HTTP_200_OK)
+
+        users = await get_users_by_usernames(usernames)
+        serializer = UserLookupSerializer(users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
