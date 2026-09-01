@@ -34,7 +34,7 @@ class UserProfile(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.username:
-            base = re.sub(r'[^a-z0-9_.-]', '', self.email.split('@')[0].lower())[:26] or 'user'
+            base = re.sub(r'[^a-z0-9_.-]', '', self.email.split('@')[0].split('+')[0].lower())[:26] or 'user'
             candidate, suffix = base, 1
             while UserProfile.objects.filter(username=candidate).exists():
                 suffix += 1
