@@ -2,6 +2,7 @@ from typing import ClassVar
 
 from asgiref.sync import sync_to_async
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -11,7 +12,6 @@ from .infrastructure import sync_user_role_to_auth, sync_user_status_to_auth
 from .permissions import IsAdmin, IsInternalService
 from .repository import (
     get_all_users,
-    get_user_by_email,
     get_user_by_id,
     get_users_by_usernames,
 )
@@ -22,18 +22,19 @@ from .serializers import (
     UserStatusSerializer,
     UserSyncSerializer,
 )
+from .services import get_user_by_email_or_404, get_user_or_404
 
 
 class SyncUserView(AsyncAPIView):
-    permission_classes : ClassVar =  [IsInternalService]
+    permission_classes : ClassVar = [IsInternalService]
     async def post(self, request):
         instance = await get_user_by_id(request.data.get('user_id'))
         serializer = UserSyncSerializer(instance, data=request.data)
-        if await sync_to_async(serializer.is_valid)():
-            await sync_to_async(serializer.save)()
-            response_status = status.HTTP_201_CREATED if instance is None else status.HTTP_200_OK
-            return Response(serializer.data, response_status)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        await sync_to_async(serializer.is_valid)(raise_exception=True)
+        await sync_to_async(serializer.save)()
+        response_status = status.HTTP_201_CREATED if instance is None else status.HTTP_200_OK
+        return Response(serializer.data, response_status)
+    
 
 class MeView(AsyncAPIView):
     permission_classes: ClassVar = [IsAuthenticated]
@@ -43,39 +44,30 @@ class MeView(AsyncAPIView):
 
     async def patch(self, request):
         serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
-        if await sync_to_async(serializer.is_valid)():
-            await sync_to_async(serializer.save)()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        await sync_to_async(serializer.is_valid)(raise_exception=True)
+        await sync_to_async(serializer.save)()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 class UserStatusView(AsyncAPIView):
     permission_classes: ClassVar = [IsAuthenticated, IsAdmin]
 
     async def patch(self, request, user_id):
-        instance = await get_user_by_id(user_id)
-        if instance is None:
-            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
-        serializer = UserStatusSerializer(instance, data=request.data, partial=True)
-        if await sync_to_async(serializer.is_valid)():
-            await sync_user_status_to_auth(str(user_id), request.data['status'])
-            await sync_to_async(serializer.save)()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        instance = await get_user_or_404(user_id)
+        serializer = UserStatusSerializer(instance, data=request.data,)
+        await sync_to_async(serializer.is_valid)(raise_exception=True)
+        await sync_user_status_to_auth(str(user_id), request.data['status'])
+        await sync_to_async(serializer.save)()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class UserRoleView(AsyncAPIView):
     permission_classes: ClassVar = [IsAuthenticated, IsAdmin]
 
     async def patch(self, request, user_id):
-        instance = await get_user_by_id(user_id)
-        if instance is None:
-            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        instance = await get_user_or_404(user_id)
         serializer = UserRoleSerializer(instance, data=request.data, partial=True)
-        if await sync_to_async(serializer.is_valid)():
-            await sync_user_role_to_auth(str(user_id), request.data['role'])
-            await sync_to_async(serializer.save)()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        await sync_to_async(serializer.is_valid)(raise_exception=True)
+        await sync_user_role_to_auth(str(user_id), request.data['role'])
+        await sync_to_async(serializer.save)()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 class UserByEmailView(AsyncAPIView):
     permission_classes: ClassVar = [IsInternalService]
 
@@ -83,9 +75,7 @@ class UserByEmailView(AsyncAPIView):
         email = request.query_params.get('email')
         if not email:
             return Response({'detail': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
-        user = await get_user_by_email(email)
-        if user is None:
-            return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+        user = await get_user_by_email_or_404(email)
         serializer = UserProfileSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 class UserListView(AsyncAPIView):
@@ -100,9 +90,7 @@ class UserDetailView(AsyncAPIView):
     permission_classes: ClassVar =[IsAuthenticated]
 
     async def get(self, request, user_id):
-        user = await get_user_by_id(user_id)
-        if user is None:
-            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        user = await get_user_or_404(user_id)
         serializer = UserProfileSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
         
@@ -114,7 +102,7 @@ class UserLookupView(AsyncAPIView):
     async def post(self, request):
         raw = request.data.get('usernames')
         if not isinstance(raw, list):
-            return Response({'detail': 'usernames must be a list.'}, status=status.HTTP_400_BAD_REQUEST)
+            raise ValidationError({'usernames': 'Must be a list.'})
 
         usernames = list({u.lower() for u in raw if isinstance(u, str) and u})[:self.MAX_USERNAMES]
         if not usernames:
