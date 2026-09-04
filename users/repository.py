@@ -13,6 +13,6 @@ async def get_all_users()-> list[UserProfile] | None:
 async def get_users_by_usernames(usernames: list[str]) -> list[UserProfile]:
     return [user async for user in UserProfile.objects.filter(username__in=usernames, status=UserProfile.Status.ACTIVE)]
 
-async def create_user(email: str, role: UserProfile.Role) -> UserProfile:
-    user = await UserProfile.objects.acreate(email=email, role=role)
+async def create_user(user_id: str, email: str, role: UserProfile.Role) -> UserProfile:
+    user = await UserProfile.objects.acreate(user_id=user_id, email=email, role=role)
     return user
