@@ -20,7 +20,7 @@ async def get_user_by_email_or_404(email: str) -> UserProfile:
 
 async def sync_user(user: UserProfile | None, data: dict) -> tuple [UserProfile, bool]:
     if user is None:
-        user = await create_user(user_id=data['user_id'], email=data['email'], role=data['role'])
+        user = await create_user(user_id=data['user_id'], email=data['email'], role=data.get('role', UserProfile.Role.MEMBER))
         return user, True
     if user.email != data['email']:
         raise ValidationError({'email': 'Email does not match existing user'})
