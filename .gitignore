@@ -11,3 +11,7 @@ dist/
 db.sqlite3
 staticfiles/
 .vscode
+
+# Local-only unit tests (not committed by choice)
+tests/
+.pytest_cache/
