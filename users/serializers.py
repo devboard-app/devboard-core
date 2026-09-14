@@ -18,6 +18,8 @@ class UserLookupSerializer(serializers.ModelSerializer):
         fields: ClassVar = ['user_id', 'username', 'avatar']
 
 
+class UserBatchLookupInputSerializer(serializers.Serializer):
+    ids = serializers.ListField(child=serializers.UUIDField(), allow_empty=True)
 
 
 class UserSyncInputSerializer(serializers.Serializer):
