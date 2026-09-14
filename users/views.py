@@ -12,9 +12,11 @@ from .permissions import IsAdmin, IsInternalService
 from .repository import (
     get_all_users,
     get_user_by_id,
+    get_users_by_ids,
     get_users_by_usernames,
 )
 from .serializers import (
+    UserBatchLookupInputSerializer,
     UserLookupInputSerializer,
     UserLookupSerializer,
     UserProfileInputSerializer,
@@ -116,3 +118,19 @@ class UserLookupView(AsyncAPIView):
         users = await get_users_by_usernames(usernames)
         serializer = UserLookupSerializer(users, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class UserBatchLookupView(AsyncAPIView):
+    permission_classes: ClassVar = [IsAuthenticated]
+
+    MAX_IDS = 100
+
+    async def post(self, request):
+        data = validated(UserBatchLookupInputSerializer, request.data)
+        ids = list({str(i) for i in data['ids']})[:self.MAX_IDS]
+        if not ids:
+            return Response([], status=status.HTTP_200_OK)
+
+        users = await get_users_by_ids(ids)
+        serializer = UserLookupSerializer(users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
