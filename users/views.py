@@ -99,7 +99,7 @@ class UserDetailView(AsyncAPIView):
 
     async def get(self, request, user_id):
         user = await get_user_or_404(user_id)
-        serializer = UserProfileSerializer(user)
+        serializer = UserLookupSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
         
 class UserLookupView(AsyncAPIView):
