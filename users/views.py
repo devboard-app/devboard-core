@@ -125,10 +125,14 @@ class UserBatchLookupView(AsyncAPIView):
     permission_classes: ClassVar = [IsAuthenticated]
 
     MAX_IDS = 100
+    MAX_RAW_IDS = 500
 
     async def post(self, request):
+        raw_ids = request.data.get('ids') if isinstance(request.data, dict) else None
+        if isinstance(raw_ids, list) and len(raw_ids) > self.MAX_RAW_IDS:
+            raise ValidationError(f"ids: no more than {self.MAX_RAW_IDS} allowed.")
         data = validated(UserBatchLookupInputSerializer, request.data)
-        ids = list(dict.fromkeys(str(i) for i in data['ids']))
+        ids = list(dict.fromkeys(str(i) for i in data['ids']))[:self.MAX_IDS]
         if not ids:
             return Response([], status=status.HTTP_200_OK)
 
