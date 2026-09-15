@@ -5,6 +5,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from core.pagination import get_limit_offset, paginated
 from core.serializers import validated
 from core.views import AsyncAPIView
 
@@ -92,9 +93,10 @@ class UserListView(AsyncAPIView):
     permission_classes: ClassVar =[IsAuthenticated, IsAdmin]
 
     async def get(self, request):
-        users = await get_all_users()
+        limit, offset = get_limit_offset(request)
+        users, total = await get_all_users(limit, offset)
         serializer = UserProfileSerializer(users, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(paginated(serializer.data, total, limit, offset), status=status.HTTP_200_OK)
 
 class UserDetailView(AsyncAPIView):
     permission_classes: ClassVar =[IsAuthenticated]
