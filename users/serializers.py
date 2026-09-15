@@ -19,7 +19,7 @@ class UserLookupSerializer(serializers.ModelSerializer):
 
 
 class UserBatchLookupInputSerializer(serializers.Serializer):
-    ids = serializers.ListField(child=serializers.UUIDField(), allow_empty=True)
+    ids = serializers.ListField(child=serializers.UUIDField(), allow_empty=True, max_length=100)
 
 
 class UserSyncInputSerializer(serializers.Serializer):

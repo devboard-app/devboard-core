@@ -128,7 +128,7 @@ class UserBatchLookupView(AsyncAPIView):
 
     async def post(self, request):
         data = validated(UserBatchLookupInputSerializer, request.data)
-        ids = list({str(i) for i in data['ids']})[:self.MAX_IDS]
+        ids = list(dict.fromkeys(str(i) for i in data['ids']))
         if not ids:
             return Response([], status=status.HTTP_200_OK)
 
