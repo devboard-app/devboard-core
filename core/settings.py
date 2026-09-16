@@ -140,5 +140,6 @@ MAILERS = {
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'users.authentication.JWTAuthentication',
-    ]
+    ],
+    'EXCEPTION_HANDLER': 'core.exception_handler.custom_exception_handler',
 }
