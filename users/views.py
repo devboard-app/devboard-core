@@ -132,7 +132,7 @@ class UserBatchLookupView(AsyncAPIView):
         if isinstance(raw_ids, list):
             raw_ids = list(dict.fromkeys(str(i) for i in raw_ids))
             if len(raw_ids) > self.MAX_RAW_IDS:
-                raise ValidationError(f"ids: no more than {self.MAX_RAW_IDS} allowed.")
+                raise ValidationError({'ids': f'no more than {self.MAX_RAW_IDS} allowed.'})
         data = validated(UserBatchLookupInputSerializer, request.data)
         ids = list(dict.fromkeys(str(i) for i in data['ids']))[:self.MAX_IDS]
         if not ids:
