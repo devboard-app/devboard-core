@@ -21,3 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/users/', include('users.urls')),
 ]
+
+handler500 = 'core.exception_handler.server_error'
