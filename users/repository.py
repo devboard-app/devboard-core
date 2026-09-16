@@ -10,7 +10,7 @@ async def get_user_by_email(email: str)-> UserProfile | None:
     return await UserProfile.objects.filter(email=email).afirst()
 
 async def get_all_users(limit: int, offset: int)-> tuple[list[UserProfile], int]:
-    return await page(UserProfile.objects.all(), limit, offset)
+    return await page(UserProfile.objects.all().order_by('created_at', 'user_id'), limit, offset)
 
 async def get_users_by_usernames(usernames: list[str]) -> list[UserProfile]:
     return [user async for user in UserProfile.objects.filter(username__in=usernames, status=UserProfile.Status.ACTIVE)]
