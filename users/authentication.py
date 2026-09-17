@@ -33,4 +33,7 @@ class JWTAuthentication(BaseAuthentication):
         user.last_active = datetime.now(timezone.utc)
         user.save(update_fields=['last_active'])
         return (user, token)
-        
+
+    def authenticate_header(self, request):
+        return 'Bearer'
+    
