@@ -141,4 +141,10 @@ class UserBatchLookupView(AsyncAPIView):
         users = await get_users_by_ids(ids)
         serializer = UserLookupSerializer(users, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
+class UserInternalStatusView(AsyncAPIView):
+    permission_classes: ClassVar = [IsInternalService]
+
+    async def get(self, request, user_id):
+        user = await get_user_or_404(str(user_id))
+        return Response({'status': user.status}, status=status.HTTP_200_OK)
