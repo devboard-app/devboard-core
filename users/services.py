@@ -1,9 +1,14 @@
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import APIException, NotFound, ValidationError
 
 from users.infrastructure import sync_user_role_to_auth, sync_user_status_to_auth
 
 from .models import UserProfile
 from .repository import create_user, get_user_by_email, get_user_by_id
+
+
+class ProfileSaveException(APIException):
+    status_code = 500
+    default_detail = "Could not save the change. Please try again."
 
 
 async def get_user_or_404(user_id: str) -> UserProfile:
@@ -38,11 +43,17 @@ async def update_profile(user: UserProfile, data: dict) -> UserProfile:
 async def update_user_status(user: UserProfile, new_status: str) -> UserProfile:
     await sync_user_status_to_auth(str(user.user_id), new_status)
     user.status = new_status
-    await user.asave(update_fields=['status', 'updated_at'])
+    try:
+        await user.asave(update_fields=['status', 'updated_at'])
+    except Exception as exc:
+        raise ProfileSaveException() from exc
     return user
 
 async def update_user_role(user: UserProfile, new_role: str) -> UserProfile:
     await sync_user_role_to_auth(str(user.user_id), new_role)
     user.role = new_role
-    await user.asave(update_fields=['role', 'updated_at'])
+    try:
+        await user.asave(update_fields=['role', 'updated_at'])
+    except Exception as exc:
+        raise ProfileSaveException() from exc
     return user
