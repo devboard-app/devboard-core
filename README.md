@@ -24,7 +24,7 @@ docker compose exec devboard-core python manage.py migrate
 
 ## What it does
 
-1. **Creates a profile** when a user signs up (devboard-auth calls it).
+1. **Creates a profile** when a user verifies their email (devboard-auth calls it).
 2. **Shows and edits your profile** (avatar and timezone).
 3. **Lets admins** list users, deactivate them and change their role.
 4. **Answers other services**: find users by id, username or email.
@@ -34,13 +34,13 @@ docker compose exec devboard-core python manage.py migrate
 ## How it fits
 
 ```
-devboard-auth ──sync after sign-up──> devboard-core
+devboard-auth ──sync on email verification──> devboard-core
 devboard-core ──role / status change──> devboard-auth
 devboard-work ──find users by name or email──> devboard-core
 ```
 
 - devboard-auth owns the **login**. devboard-core owns the **profile**.
-- Both keep a role and a status. When an admin changes one here, core tells devboard-auth. If auth is unreachable, the change fails with `502` and nothing is saved.
+- Both keep a role and a status. When an admin changes one here, core tells devboard-auth first, then saves locally. If auth is unreachable, the change fails with `502` and nothing is saved. If auth succeeds but the local save then fails (rare), the caller gets a clear "could not save, please retry" error instead of a generic one — retrying is safe, since the sync to auth is itself safe to repeat.
 
 ---
 
@@ -52,7 +52,7 @@ devboard-work ──find users by name or email──> devboard-core
 | Admin | Bearer token with role `admin` in core | Everything above, plus list users, change status and role. |
 | Another service | `X-Service-Key: <INTERNAL_API_KEY>` | Sync users and look them up. |
 
-Inactive users are blocked even with a valid token. Each request also updates the user's `last_active` time.
+Inactive users are blocked even with a valid token. `last_active` is updated on request, but only when the stored value is more than 5 minutes old — not on every single request.
 
 ---
 
