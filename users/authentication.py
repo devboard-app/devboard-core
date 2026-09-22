@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from jose import JWTError, jwt
@@ -7,7 +7,7 @@ from rest_framework.exceptions import AuthenticationFailed
 
 from users.models import UserProfile
 
-
+LAST_ACTIVE_UPDATE_INTERVAL = timedelta(minutes=5)
 class JWTAuthentication(BaseAuthentication):
     def authenticate(self, request):
         auth_header = request.headers.get('Authorization')
@@ -30,8 +30,11 @@ class JWTAuthentication(BaseAuthentication):
             raise AuthenticationFailed('User not found')
         if user.status != UserProfile.Status.ACTIVE:
             raise AuthenticationFailed('User account is inactive')
-        user.last_active = datetime.now(timezone.utc)
-        user.save(update_fields=['last_active'])
+
+        now = datetime.now(timezone.utc)
+        if user.last_active is None or now - user.last_active >= LAST_ACTIVE_UPDATE_INTERVAL:
+            user.last_active = now
+            user.save(update_fields=['last_active'])
         return (user, token)
 
     def authenticate_header(self, request):
