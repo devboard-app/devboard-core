@@ -2,7 +2,7 @@
 
 **The user profiles.** It stores who each user is: username, avatar, timezone, role and status. Other services ask it about users.
 
-- **Port:** `8003`
+- **Port:** `18003`
 - **Stack:** Django, Django REST Framework (async views), PostgreSQL
 
 ---
@@ -11,7 +11,7 @@
 
 1. Open a terminal in `devboard-infra`.
 2. Run `setup.bat`. It creates the database, starts this service and runs the migrations.
-3. Open `http://localhost:8003/api/users/me/`. It answers `401`, which means the service is up and wants a login.
+3. Open `http://localhost:18003/api/users/me/`. It answers `401`, which means the service is up and wants a login.
 
 Only want this one service? The database must already be running. Then:
 

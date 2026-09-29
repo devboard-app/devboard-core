@@ -14,11 +14,11 @@ services:
       DB_HOST: devboard-db
       DB_PORT: 5432
     ports:
-      - "8003:8000"
+      - "18003:8000"
     networks:
-      - devboard-network
+      - devboard-ic-network
 
 networks:
-  devboard-network:
-    name: devboard-network
+  devboard-ic-network:
+    name: devboard-ic-network
     external: true
