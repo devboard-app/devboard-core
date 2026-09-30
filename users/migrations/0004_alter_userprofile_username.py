@@ -4,30 +4,33 @@ import re
 
 from django.db import migrations, models
 
+
 def backfill(apps, schema_editor):
-    UserProfile = apps.get_model('users', 'UserProfile')
+    UserProfile = apps.get_model("users", "UserProfile")
     taken = set()
-    for user in UserProfile.objects.order_by('created_at'):
-        base = re.sub(r'[^a-z0-9_.-]', '', user.email.split('@')[0].lower())[:26] or 'user'
+    for user in UserProfile.objects.order_by("created_at"):
+        base = (
+            re.sub(r"[^a-z0-9_.-]", "", user.email.split("@")[0].lower())[:26] or "user"
+        )
         candidate, suffix = base, 1
         while candidate in taken:
             suffix += 1
-            candidate = f'{base}{suffix}'
+            candidate = f"{base}{suffix}"
         taken.add(candidate)
         user.username = candidate
-        user.save(update_fields=['username'])
+        user.save(update_fields=["username"])
+
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('users', '0003_rename_name_userprofile_username'),
+        ("users", "0003_rename_name_userprofile_username"),
     ]
 
     operations = [
         migrations.RunPython(backfill, migrations.RunPython.noop),
         migrations.AlterField(
-            model_name='userprofile',
-            name='username',
+            model_name="userprofile",
+            name="username",
             field=models.CharField(max_length=30, unique=True),
         ),
     ]

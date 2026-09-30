@@ -8,35 +8,39 @@ from rest_framework.exceptions import AuthenticationFailed
 from users.models import UserProfile
 
 LAST_ACTIVE_UPDATE_INTERVAL = timedelta(minutes=5)
+
+
 class JWTAuthentication(BaseAuthentication):
     def authenticate(self, request):
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Bearer '):
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
             return None
 
-        token = auth_header.split(' ')[1]
+        token = auth_header.split(" ")[1]
 
-        try: 
-            payload = jwt.decode(token, settings.JWT_SECRET, algorithms=['HS256'])
+        try:
+            payload = jwt.decode(token, settings.JWT_SECRET, algorithms=["HS256"])
         except JWTError:
-            raise AuthenticationFailed('Invalid or expired token')
+            raise AuthenticationFailed("Invalid or expired token")
 
-        user_id = payload.get('sub')
+        user_id = payload.get("sub")
         if not user_id:
-            raise AuthenticationFailed('Invalid token payload')
+            raise AuthenticationFailed("Invalid token payload")
 
         user = UserProfile.objects.filter(user_id=user_id).first()
         if user is None:
-            raise AuthenticationFailed('User not found')
+            raise AuthenticationFailed("User not found")
         if user.status != UserProfile.Status.ACTIVE:
-            raise AuthenticationFailed('User account is inactive')
+            raise AuthenticationFailed("User account is inactive")
 
         now = datetime.now(timezone.utc)
-        if user.last_active is None or now - user.last_active >= LAST_ACTIVE_UPDATE_INTERVAL:
+        if (
+            user.last_active is None
+            or now - user.last_active >= LAST_ACTIVE_UPDATE_INTERVAL
+        ):
             user.last_active = now
-            user.save(update_fields=['last_active'])
+            user.save(update_fields=["last_active"])
         return (user, token)
 
     def authenticate_header(self, request):
-        return 'Bearer'
-    
+        return "Bearer"

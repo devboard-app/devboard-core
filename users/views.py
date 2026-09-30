@@ -37,15 +37,16 @@ from .services import (
 
 
 class SyncUserView(AsyncAPIView):
-    permission_classes : ClassVar = [IsInternalService]
+    permission_classes: ClassVar = [IsInternalService]
 
     async def post(self, request):
         data = validated(UserSyncInputSerializer, request.data)
-        instance = await get_user_by_id(str(data['user_id']))
+        instance = await get_user_by_id(str(data["user_id"]))
         user, created = await sync_user(instance, data)
         response_status = status.HTTP_201_CREATED if created else status.HTTP_200_OK
         serializer = UserProfileSerializer(user)
         return Response(serializer.data, response_status)
+
 
 class MeView(AsyncAPIView):
     permission_classes: ClassVar = [IsAuthenticated]
@@ -59,15 +60,18 @@ class MeView(AsyncAPIView):
         user = await update_profile(request.user, data)
         serializer = UserProfileSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class UserStatusView(AsyncAPIView):
     permission_classes: ClassVar = [IsAuthenticated, IsAdmin]
 
     async def patch(self, request, user_id):
         user = await get_user_or_404(user_id)
         data = validated(UserStatusInputSerializer, request.data)
-        user = await update_user_status(user, data['status'])
+        user = await update_user_status(user, data["status"])
         serializer = UserProfileSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class UserRoleView(AsyncAPIView):
     permission_classes: ClassVar = [IsAuthenticated, IsAdmin]
@@ -75,51 +79,61 @@ class UserRoleView(AsyncAPIView):
     async def patch(self, request, user_id):
         user = await get_user_or_404(user_id)
         data = validated(UserRoleInputSerializer, request.data)
-        user = await update_user_role(user, data['role'])
+        user = await update_user_role(user, data["role"])
         serializer = UserProfileSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
+
 class UserByEmailView(AsyncAPIView):
     permission_classes: ClassVar = [IsInternalService]
 
     async def get(self, request):
-        email = request.query_params.get('email')
+        email = request.query_params.get("email")
         if not email:
-            raise ValidationError({'email': 'Email query parameter is required.'})
+            raise ValidationError({"email": "Email query parameter is required."})
         user = await get_user_by_email_or_404(email)
         serializer = UserProfileSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class UserListView(AsyncAPIView):
-    permission_classes: ClassVar =[IsAuthenticated, IsAdmin]
+    permission_classes: ClassVar = [IsAuthenticated, IsAdmin]
 
     async def get(self, request):
         limit, offset = get_limit_offset(request)
         users, total = await get_all_users(limit, offset)
         serializer = UserProfileSerializer(users, many=True)
-        return Response(paginated(serializer.data, total, limit, offset), status=status.HTTP_200_OK)
+        return Response(
+            paginated(serializer.data, total, limit, offset), status=status.HTTP_200_OK
+        )
+
 
 class UserDetailView(AsyncAPIView):
-    permission_classes: ClassVar =[IsAuthenticated]
+    permission_classes: ClassVar = [IsAuthenticated]
 
     async def get(self, request, user_id):
         user = await get_user_or_404(user_id)
         serializer = UserLookupSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
-        
+
+
 class UserLookupView(AsyncAPIView):
     permission_classes: ClassVar = [IsInternalService]
 
     MAX_USERNAMES = 25
 
     async def post(self, request):
-        data= validated(UserLookupInputSerializer, request.data)
-        usernames = list({u.lower() for u in data['usernames'] if u})[:self.MAX_USERNAMES]
+        data = validated(UserLookupInputSerializer, request.data)
+        usernames = list({u.lower() for u in data["usernames"] if u})[
+            : self.MAX_USERNAMES
+        ]
         if not usernames:
             return Response([], status=status.HTTP_200_OK)
 
         users = await get_users_by_usernames(usernames)
         serializer = UserLookupSerializer(users, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class UserBatchLookupView(AsyncAPIView):
     permission_classes: ClassVar = [IsAuthenticated]
@@ -128,13 +142,15 @@ class UserBatchLookupView(AsyncAPIView):
     MAX_RAW_IDS = 500
 
     async def post(self, request):
-        raw_ids = request.data.get('ids') if isinstance(request.data, dict) else None
+        raw_ids = request.data.get("ids") if isinstance(request.data, dict) else None
         if isinstance(raw_ids, list):
             raw_ids = list(dict.fromkeys(str(i) for i in raw_ids))
             if len(raw_ids) > self.MAX_RAW_IDS:
-                raise ValidationError({'ids': f'no more than {self.MAX_RAW_IDS} allowed.'})
+                raise ValidationError(
+                    {"ids": f"no more than {self.MAX_RAW_IDS} allowed."}
+                )
         data = validated(UserBatchLookupInputSerializer, request.data)
-        ids = list(dict.fromkeys(str(i) for i in data['ids']))[:self.MAX_IDS]
+        ids = list(dict.fromkeys(str(i) for i in data["ids"]))[: self.MAX_IDS]
         if not ids:
             return Response([], status=status.HTTP_200_OK)
 
@@ -142,9 +158,10 @@ class UserBatchLookupView(AsyncAPIView):
         serializer = UserLookupSerializer(users, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class UserInternalStatusView(AsyncAPIView):
     permission_classes: ClassVar = [IsInternalService]
 
     async def get(self, request, user_id):
         user = await get_user_or_404(str(user_id))
-        return Response({'status': user.status}, status=status.HTTP_200_OK)
+        return Response({"status": user.status}, status=status.HTTP_200_OK)
